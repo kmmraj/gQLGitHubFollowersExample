@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">GQLGitHubFollowersExample</string>
+    <string name="repo_list_name">User Repositories</string>
+    <string name="followers_list_name">User Followers</string>
 </resources>
