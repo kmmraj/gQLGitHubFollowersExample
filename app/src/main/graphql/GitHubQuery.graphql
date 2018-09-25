@@ -30,3 +30,32 @@ query ListOfRepos($login: String!, $first: Int) {
     }
   }
 }
+
+
+query UserAndFollowersInfo ($login: String!) {
+  user(login: $login) {
+    repositories(first: 3, orderBy: {field: STARGAZERS, direction: DESC}) {
+      nodes {
+        repoName: name
+        repoUrl: url
+        description
+      }
+    }
+    following(first:3){
+      totalCount
+      nodes{
+        login
+        name
+        userUrl:url
+      }
+      nodes {
+        repositories(first: 3, orderBy: {field: STARGAZERS, direction: DESC}) {
+          nodes {
+            followerRepoName:name
+            repoUrl: url
+          }
+        }
+      }
+    }
+   }
+  }

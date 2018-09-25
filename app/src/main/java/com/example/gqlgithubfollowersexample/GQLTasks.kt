@@ -1,5 +1,6 @@
 package com.example.gqlgithubfollowersexample
 
+import UserAndFollowersInfoQuery
 import android.net.ParseException
 import android.os.AsyncTask
 import android.util.Log
@@ -9,10 +10,7 @@ import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.response.CustomTypeAdapter
 import com.apollographql.apollo.response.CustomTypeValue
-import com.apollographql.apollo.rx2.Rx2Apollo
-import io.reactivex.Observable
-import io.reactivex.SingleObserver
-import io.reactivex.disposables.Disposable
+import com.example.gqlgithubfollowersexample.Constants.BASE_URL
 import okhttp3.OkHttpClient
 import type.CustomType
 import java.text.SimpleDateFormat
@@ -23,131 +21,82 @@ import java.util.*
  */
 
 
-typealias GHRepoListObservableType = Observable<Response<ListOfReposQuery.Data>>
 
-interface RepoListTaskListenerInterface {
-    fun onFinished(result: RepoList)
+interface UserInfoTaskListenerInterface {
+    fun onFinished(result: UserViewModel)
 }
 
 class RepoListGQLTask (val userName:String,
                        val token: String,
-                       val repoListTaskListener: RepoListTaskListenerInterface): AsyncTask<Void,Void,Boolean>() {
+                       val userInfoTaskListener: UserInfoTaskListenerInterface): AsyncTask<Void,Void,Boolean>() {
 
-
-    private val BASE_URL = "https://api.github.com/graphql"
     private lateinit var apolloClient: ApolloClient
     private val TAG = "RepoListGQLTask"
 
-
-
     override fun doInBackground(vararg params: Void?): Boolean {
-        getRepos()
-
+        getUserInfo()
         return true
     }
 
-    fun getRepos() {
+    private fun getUserInfo() {
         apolloClient = setupApollo(token)
-        apolloClient.query(ListOfReposQuery
+        apolloClient.query(UserAndFollowersInfoQuery
                 .builder()
                 .login(userName)
-                .first(5)
                 .build())
-                .enqueue(object : ApolloCall.Callback<ListOfReposQuery.Data>() {
+                .enqueue(object : ApolloCall.Callback<UserAndFollowersInfoQuery.Data>() {
 
                     override fun onFailure(e: ApolloException) {
                         Log.d(TAG,e.message.toString())
                     }
 
-                    override fun onResponse(response: Response<ListOfReposQuery.Data>) {
-                        //TODO: Start here
-                        val repositories: ListOfReposQuery.Repositories? = response.data()?.user()?.repositories()
-                        val repoViewModelList = arrayListOf<RepoViewModel>()
+                    override fun onResponse(response: Response<UserAndFollowersInfoQuery.Data>) {
+                        val user: UserAndFollowersInfoQuery.User? = response.data()?.user()
+                        val userRepoViewModelList = user?.repositories()
+                        val followingViewModelList = user?.following()
 
-                        repositories?.nodes()?.size
-                        repositories?.let {
-                            it.nodes()?.let {
-                                for(repo in it){
-                                    repo.createdAt()
+                        val repoViewModelList = getRepoList(userRepoViewModelList)
+                        val followingUserList = getFollowingUserInfo(followingViewModelList)
 
-                                    val repoUrl = repo.url().toString()
-                                    val repoVM = RepoViewModel(repoName = repo.name(),
-                                            watchers = repo.watchers().totalCount(),
-                                            stargazersCount = repo.stargazers().totalCount(),
-                                            language = repo.primaryLanguage()?.toString() ?: "",
-                                            forks = repo.forkCount(),
-                                            description = repo.description() ?: "",
-                                            htmlUrl = repoUrl)
-                                    // TODO repo.pushedAt
-
-                                    repoViewModelList.add(repoVM)
-                                }
-                            }
-                        }
-
-
+                        userInfoTaskListener.onFinished(UserViewModel(repoViewModelList,followingUserList))
 
                     }
                 })
-
-        apolloClient
     }
 
+    private fun getFollowingUserInfo(followingViewModelList: UserAndFollowersInfoQuery.Following? ): ArrayList<BaseUserViewModel>{
 
-    fun getGHRepoObservable(): GHRepoListObservableType {
+        val followingUserList = arrayListOf<BaseUserViewModel>()
+        followingViewModelList?.let {
+            it.nodes()?.let {
+                for (following in it) {
+                    val followerUserVM = BaseUserViewModel(following.login(),
+                            following.name(),
+                            following.userUrl(),
+                            getRepoList(following.repositories() as? UserAndFollowersInfoQuery.Repositories))
 
-        apolloClient = setupApollo(token)
-        val query = ListOfReposQuery.builder().login(userName)
-                .first(100)
-                .build()
-        val apolloWatcher = apolloClient.query(query).watcher()
-        val repoListObservable = Rx2Apollo.from(apolloWatcher)
-        return repoListObservable
-    }
-
-    fun getRepoListSubscriber(): SingleObserver<GHRepoListObservableType> {
-        return object : SingleObserver<GHRepoListObservableType> {
-            override fun onSubscribe(d: Disposable) {
-            }
-
-            override fun onError(exception:  Throwable) {
-
-                Log.d(TAG,"Error is ${exception.localizedMessage}")
-            }
-
-            override fun onSuccess(value: GHRepoListObservableType) {
-
-                val response = value.blockingFirst()
-                val repositories: ListOfReposQuery.Repositories? = response.data()?.user()?.repositories()
-                val repoViewModelList = arrayListOf<RepoViewModel>()
-
-                repositories?.let {
-                    it.nodes()?.let {
-                        for(repo in it){
-                            val repoUrl = repo.url().toString()
-                            val repoVM = RepoViewModel(repoName = repo.name(),
-                                    watchers = repo.watchers().totalCount(),
-                                    stargazersCount = repo.stargazers().totalCount(),
-                                    language = repo.primaryLanguage()?.name() ?: "",
-                                    forks = repo.forkCount(),
-                                    description = repo.description() ?: "",
-                                    htmlUrl = repoUrl)
-                            // TODO repo.pushedAt
-                            repoViewModelList.add(repoVM)
-                        }
-                    }
+                    followingUserList.add(followerUserVM)
                 }
-
-                repoViewModelList.let {
-                    repoListTaskListener.onFinished(
-                            result = RepoList(repoList = repoViewModelList as List<RepoViewModel>))
-                }
-
-
             }
-
         }
+        return followingUserList
+    }
 
+    private fun getRepoList(userRepoViewModelList: UserAndFollowersInfoQuery.Repositories?):
+            ArrayList<RepoViewModel> {
+        val repoViewModelList = arrayListOf<RepoViewModel>()
+        userRepoViewModelList?.let {
+            it.nodes()?.let {
+                for (repo in it) {
+                   // val repoUrl = repo.repoUrl()
+                    val repoVM = RepoViewModel(repoName = repo.repoName(),
+                            htmlUrl = repo.repoUrl(),
+                            description = repo.description())
+                    repoViewModelList.add(repoVM)
+                }
+            }
+        }
+        return repoViewModelList
     }
 
 
@@ -186,3 +135,5 @@ class RepoListGQLTask (val userName:String,
                 .build()
     }
 }
+
+

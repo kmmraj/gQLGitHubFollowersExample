@@ -21,34 +21,21 @@ fun <T : Parcelable> Parcel.readParcelable(creator: Parcelable.Creator<T>): T? {
 }
 
 data class RepoViewModel ( var repoName: String? = null,
-                      var watchers: Int = 0,
-                      var stargazersCount: Int = 0,
-                      var language: String = "",
-                     // var pushedAt: Date,
-                      var forks: Int = 0,
-                      var description: String = "",
-                      var htmlUrl: String = "") : Parcelable {
+                           var htmlUrl: String = "",
+                           var description: String? ="") : Parcelable {
 
 
     constructor(parcelIn: Parcel) : this(repoName = parcelIn.readString(),
-            watchers = parcelIn.readInt(),
-            stargazersCount = parcelIn.readInt(),
-            language = parcelIn.readString(),
-            forks = parcelIn.readInt(),
-            description = parcelIn.readString(),
-            htmlUrl =  parcelIn.readString()
+            htmlUrl =  parcelIn.readString(),
+            description = parcelIn.readString()
             )
 
     override fun describeContents(): Int = 0
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(repoName)
-        dest.writeInt(watchers)
-        dest.writeInt(stargazersCount)
-        dest.writeString(language)
-        dest.writeInt(forks)
-        dest.writeString(description)
         dest.writeString(htmlUrl)
+        dest.writeString(description)
     }
 
     companion object {
@@ -59,3 +46,61 @@ data class RepoViewModel ( var repoName: String? = null,
 
 
 data class RepoList(val repoList: List<RepoViewModel>)
+
+data class BaseUserViewModel ( var loginName: String? = "",
+                               var userName: String? = null,
+                               var htmlUrl: String = "",
+                               var repoList: List<RepoViewModel>? = null) : Parcelable {
+
+
+    constructor(parcelIn: Parcel) : this(loginName = parcelIn.readString(),
+            userName = parcelIn.readString(),
+            htmlUrl =  parcelIn.readString(),
+            repoList = mutableListOf<RepoViewModel>().apply {
+                parcelIn.readTypedList(this, RepoViewModel.CREATOR)
+            }
+    )
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(loginName)
+        dest.writeString(userName)
+        dest.writeString(htmlUrl)
+        dest.writeTypedList(repoList)
+    }
+
+    companion object {
+        @JvmField @Suppress("unused")
+        val CREATOR = createParcel { BaseUserViewModel(it) }
+    }
+}
+
+
+data class UserViewModel(val repoList: List<RepoViewModel>,
+                    var followingUsers: List<BaseUserViewModel>) : Parcelable {
+
+
+    constructor(parcelIn: Parcel) : this(
+            repoList = mutableListOf<RepoViewModel>().apply {
+                parcelIn.readTypedList(this, RepoViewModel.CREATOR)
+            },
+            followingUsers = mutableListOf<BaseUserViewModel>().apply {
+                parcelIn.readTypedList(this, BaseUserViewModel.CREATOR)
+            }
+
+    )
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+
+        dest.writeTypedList(repoList)
+        dest.writeTypedList(followingUsers)
+    }
+
+    companion object {
+        @JvmField @Suppress("unused")
+        val CREATOR = createParcel { UserViewModel(it) }
+    }
+}
