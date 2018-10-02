@@ -34,14 +34,14 @@ query ListOfRepos($login: String!, $first: Int) {
 
 query UserAndFollowersInfo ($login: String!) {
   user(login: $login) {
-    repositories(first: 3, orderBy: {field: STARGAZERS, direction: DESC}) {
+    repositories(first: 5, orderBy: {field: STARGAZERS, direction: DESC}) {
       nodes {
         repoName: name
         repoUrl: url
         description
       }
     }
-    following(first:3){
+    following(first:5){
       totalCount
       nodes{
         login
@@ -49,7 +49,7 @@ query UserAndFollowersInfo ($login: String!) {
         userUrl:url
       }
       nodes {
-        repositories(first: 3, orderBy: {field: STARGAZERS, direction: DESC}) {
+        repositories(first: 5, orderBy: {field: STARGAZERS, direction: DESC}) {
           nodes {
             followerRepoName:name
             repoUrl: url
