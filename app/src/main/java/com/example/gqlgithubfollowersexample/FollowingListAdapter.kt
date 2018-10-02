@@ -14,15 +14,13 @@ class FollowingListAdapter (context: Context,var mListOfFollowingUsers: List<Bas
 
     private val layoutInflater = LayoutInflater.from(context)
 
-    override fun getCount(): Int {
-        return mListOfFollowingUsers.size
-    }
+    override fun getCount(): Int = mListOfFollowingUsers.size
 
-    override fun getItem(position: Int): Any = mListOfFollowingUsers.get(index = position)
 
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
+    override fun getItem(position: Int): Any = mListOfFollowingUsers[position]
+
+    override fun getItemId(position: Int): Long = position.toLong()
+
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         var displayView = convertView

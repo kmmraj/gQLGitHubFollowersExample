@@ -3,11 +3,11 @@
     <string name="repo_list_name">User Repositories</string>
     <string name="followers_list_name">User Followers</string>
     <string name="repo_name">Repository Name</string>
-    <string name="repo_fullname">Repository Full Name</string>
-    <string name="folower_name">Follower Name</string>
+    <string name="repo_full_name">Repository Full Name</string>
     <string name="follower_name">Follower Name</string>
     <string name="follower_full_name">Follower Full Name</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>

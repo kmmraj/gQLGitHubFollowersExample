@@ -5,6 +5,7 @@ package com.example.gqlgithubfollowersexample
  */
 
 object Constants{
+    val USER = "octocat"
     val BASE_URL = "https://api.github.com/graphql"
     val TOKEN = ""
 }
