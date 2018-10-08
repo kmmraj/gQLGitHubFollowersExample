@@ -3,6 +3,7 @@ package com.example.gqlgithubfollowersexample
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
+import com.example.gqlgithubfollowersexample.Constants.USER_NAME
 
 
 class UserInfoActivity : AppCompatActivity(), UserInfoListener {
@@ -24,7 +25,12 @@ class UserInfoActivity : AppCompatActivity(), UserInfoListener {
     }
 
     override fun onGetUserInfo(userName: String) {
-        showFragment(UserInfoListFragment())
+        // TODO: Pass the userName as attributes
+        val args =  Bundle()
+        args.putString(USER_NAME, userName)
+        val userInfoListFragment = UserInfoListFragment()
+        userInfoListFragment.arguments = args
+        showFragment(userInfoListFragment)
     }
 
 

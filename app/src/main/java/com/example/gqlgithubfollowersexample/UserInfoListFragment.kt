@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.ListView
 import android.widget.TextView
 import com.example.gqlgithubfollowersexample.Constants.TOKEN
-import com.example.gqlgithubfollowersexample.Constants.USER
 
 
 class UserInfoListFragment : Fragment() {
@@ -18,29 +17,31 @@ class UserInfoListFragment : Fragment() {
     private var listener: OnFragmentInteractionListener? = null
 
     private lateinit var repoListTaskListener: UserInfoTaskListener
-    var mListOfRepos: List<RepoViewModel>? = arrayListOf()
+    var mListOfRepos: List<RepoViewModel>? = arrayListOf<RepoViewModel>()
     var mListOfFollowingUsers: List<BaseUserViewModel>? = arrayListOf()
     private var mRepoListViewAdapter: RepoListAdapter? = null
     private var mFollowingListAdapter: FollowingListAdapter? = null
-
-
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_user_info_list, container, false)
         val tvUserReposLabel = view.findViewById<TextView>(R.id.tv_user_repos)
-        tvUserReposLabel.text = "$USER Repositories"
         val tvUserFollowing = view.findViewById<TextView>(R.id.tv_userFollowing)
-        tvUserFollowing.text = "$USER Following"
         repoListTaskListener = UserInfoTaskListener()
-        getUserInfo()
+
+        val userName = this.arguments?.getString("USER_NAME")
+        userName?.let {
+        getUserInfo(userName)
         createRepoListView(view)
         createFollowingUserListView(view)
+        }
+        tvUserReposLabel.text = "$userName Repositories"
+        tvUserFollowing.text = "$userName Following"
         return view
     }
 
-    private fun getUserInfo() {
-        val gitHubTask = RepoListGQLTask(USER, TOKEN, repoListTaskListener)
+    private fun getUserInfo(userName: String) {
+        val gitHubTask = RepoListGQLTask(userName, TOKEN, repoListTaskListener)
         gitHubTask.execute()
     }
 
@@ -95,9 +96,6 @@ class UserInfoListFragment : Fragment() {
         // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
-
-
-
 
     private inner class UserInfoTaskListener: UserInfoTaskListenerInterface {
         override fun onFinished(result: UserViewModel) {
